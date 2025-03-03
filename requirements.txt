@@ -1,0 +1,11 @@
+streamlit
+psycopg2-binary
+pandas
+plotly
+bcrypt
+python-dotenv
+fpdf
+pillow
+sqlalchemy
+watchdog
+streamlit-extras
