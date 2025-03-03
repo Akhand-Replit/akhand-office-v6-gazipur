@@ -1,4 +1,11 @@
 import streamlit as st
+import os
+import sys
+
+# Add the current directory to the Python path to ensure imports work correctly
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Now import the utility modules
 from utils.auth import check_authentication, login_user, logout_user
 from utils.db import initialize_database
 from utils.ui import set_page_config, render_login_form
@@ -11,8 +18,18 @@ initialize_database()
 set_page_config("Company Management System")
 
 # Add custom CSS
-with open("static/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+try:
+    with open("static/style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+except FileNotFoundError:
+    # Create the directory if it doesn't exist
+    os.makedirs("static", exist_ok=True)
+    # Create the CSS file if it doesn't exist
+    with open("static/style.css", "w") as f:
+        f.write("/* Custom styling will be added here */")
+    # Now try again
+    with open("static/style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 # Initialize session state
 if "authenticated" not in st.session_state:
