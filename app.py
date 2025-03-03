@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.auth import check_authentication, login_user, logout_user
 from utils.db import initialize_database
 from utils.ui import set_page_config, render_login_form
-import streamlit_extras.colored_header as colored_header
+import streamlit as st
 
 # Initialize database
 initialize_database()
@@ -56,11 +56,8 @@ def main():
         with st.container():
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                colored_header.colored_header(
-                    label="Welcome to Company Management System",
-                    description="Please login to continue",
-                    color_name="blue-green",
-                )
+                st.header("Welcome to Company Management System")
+                st.subheader("Please login to continue")
                 render_login_form()
     else:
         # Display appropriate dashboard based on user role
