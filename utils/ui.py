@@ -66,22 +66,22 @@ def render_navigation(current_page, navigation_items):
             icon = item.get("icon", "📄")
             
             if current_page == page:
-                st.sidebar.button(
+                if st.sidebar.button(
                     f"{icon} {label}",
                     key=f"nav_{page}",
                     help=f"Navigate to {label}",
-                    on_click=lambda p=page: set_current_page(p),
                     type="primary",
                     use_container_width=True
-                )
+                ):
+                    set_current_page(page)
             else:
-                st.sidebar.button(
+                if st.sidebar.button(
                     f"{icon} {label}",
                     key=f"nav_{page}",
                     help=f"Navigate to {label}",
-                    on_click=lambda p=page: set_current_page(p),
                     use_container_width=True
-                )
+                ):
+                    set_current_page(page)
         
         st.sidebar.divider()
         
@@ -161,6 +161,10 @@ def format_attachment_display(attachment_link):
         file_name = attachment_link.split('/')[-1]
         return f"<a href='{attachment_link}' target='_blank'>{file_name}</a>"
 
+def set_delete_message_id(msg_id):
+    """Helper function to set message ID for deletion."""
+    st.session_state.delete_message_id = msg_id
+
 def render_message_card(message, sender_info=None, receiver_info=None, can_delete=False):
     """Render a message card."""
     with st.container():
@@ -172,7 +176,8 @@ def render_message_card(message, sender_info=None, receiver_info=None, can_delet
             st.caption(f"**Date:** {format_datetime(str(message[8]))}")
             
             if can_delete and not message[7]:  # is_deleted
-                st.button("Delete", key=f"delete_msg_{message[0]}", on_click=lambda msg_id=message[0]: st.session_state.delete_message_id = msg_id)
+                if st.button("Delete", key=f"delete_msg_{message[0]}"):
+                    st.session_state.delete_message_id = message[0]
         
         with cols[1]:
             st.write(message[5])  # message_text
