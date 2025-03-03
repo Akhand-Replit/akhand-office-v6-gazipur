@@ -3,7 +3,6 @@ from datetime import datetime
 import base64
 from PIL import Image
 import io
-import streamlit_extras.colored_header as colored_header
 from utils.auth import login_user, logout_user
 
 def set_page_config(title="Company Management System"):
@@ -96,11 +95,14 @@ def set_current_page(page):
 
 def render_page_title(title, description=None, icon=None):
     """Render page title with optional description."""
-    colored_header.colored_header(
-        label=title if not icon else f"{icon} {title}",
-        description=description if description else "",
-        color_name="blue-green"
-    )
+    if icon:
+        st.header(f"{icon} {title}")
+    else:
+        st.header(title)
+    
+    if description:
+        st.subheader(description)
+    
     st.divider()
 
 def download_pdf(data, filename="download.pdf"):
