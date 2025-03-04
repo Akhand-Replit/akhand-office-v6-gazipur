@@ -167,24 +167,23 @@ def set_delete_message_id(msg_id):
     """Helper function to set message ID for deletion."""
     st.session_state.delete_message_id = msg_id
 
+# Open the utils/ui.py file and modify the render_message_card function:
+
 def render_message_card(message, sender_info=None, receiver_info=None, can_delete=False):
     """Render a message card."""
-    message_id = message[0]
-    timestamp = message[8]
-    
     with st.container():
         cols = st.columns([3, 7])
         
         with cols[0]:
             st.write(f"**From:** {sender_info if sender_info else message[1]}")
             st.write(f"**To:** {receiver_info if receiver_info else message[3]}")
-            st.caption(f"**Date:** {format_datetime(str(timestamp))}")
+            st.caption(f"**Date:** {format_datetime(str(message[8]))}")
             
             if can_delete and not message[7]:  # is_deleted
-                # Create a unique key using both message_id and timestamp to avoid duplicates
-                unique_key = f"delete_msg_{message_id}_{hash(str(timestamp))}"
+                # Add a unique key using both message ID and sender/receiver info
+                unique_key = f"delete_msg_{message[0]}_{sender_info}_{receiver_info}".replace(" ", "_")
                 if st.button("Delete", key=unique_key):
-                    st.session_state.delete_message_id = message_id
+                    st.session_state.delete_message_id = message[0]
         
         with cols[1]:
             st.write(message[5])  # message_text
