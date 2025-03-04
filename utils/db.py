@@ -509,7 +509,8 @@ def create_task(title, description, assigned_to, assigned_id, assigned_by, assig
             conn.close()
     return None
 
-def get_tasks(company_id=None, branch_id=None, employee_id=None, is_completed=None, assigned_by=None, assigned_by_id=None):
+def get_tasks(company_id=None, branch_id=None, employee_id=None, assigned_to=None, assigned_id=None, 
+             is_completed=None, assigned_by=None, assigned_by_id=None):
     """Get tasks based on filters."""
     conn = get_connection()
     if conn:
@@ -532,21 +533,30 @@ def get_tasks(company_id=None, branch_id=None, employee_id=None, is_completed=No
                 params.append(employee_id)
             
             if company_id:
-                if assigned_by and assigned_by == 'company':
-                    conditions.append("t.assigned_by = 'company' AND t.assigned_by_id = %s")
-                    params.append(company_id)
-                elif assigned_to_company:
-                    conditions.append("(t.assigned_to = 'company' AND t.assigned_id = %s)")
-                    params.append(company_id)
+                conditions.append("(t.assigned_by = 'company' AND t.assigned_by_id = %s)")
+                params.append(company_id)
             
             if branch_id:
-                if assigned_to_branch:
+                if assigned_to:
+                    conditions.append("(t.assigned_to = %s AND t.assigned_id = %s)")
+                    params.extend([assigned_to, branch_id])
+                else:
                     conditions.append("(t.assigned_to = 'branch' AND t.assigned_id = %s)")
                     params.append(branch_id)
+            
+            if assigned_to and assigned_id:
+                conditions.append("(t.assigned_to = %s AND t.assigned_id = %s)")
+                params.extend([assigned_to, assigned_id])
+            elif assigned_to and not assigned_id:
+                conditions.append("t.assigned_to = %s")
+                params.append(assigned_to)
             
             if assigned_by and assigned_by_id:
                 conditions.append("t.assigned_by = %s AND t.assigned_by_id = %s")
                 params.extend([assigned_by, assigned_by_id])
+            elif assigned_by and not assigned_by_id:
+                conditions.append("t.assigned_by = %s")
+                params.append(assigned_by)
             
             if is_completed is not None:
                 conditions.append("t.is_completed = %s")
