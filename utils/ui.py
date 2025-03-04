@@ -172,7 +172,7 @@ def set_delete_message_id(msg_id):
 
 def render_message_card(message, sender_info=None, receiver_info=None, can_delete=False):
     """Render a message card."""
-    with st.container():
+    with st.container(border=True):
         cols = st.columns([3, 7])
         
         with cols[0]:
@@ -181,15 +181,24 @@ def render_message_card(message, sender_info=None, receiver_info=None, can_delet
             st.caption(f"**Date:** {format_datetime(str(message[8]))}")
             
             if can_delete and not message[7]:  # is_deleted
-                # Add a unique key using both message ID and sender/receiver info
-                unique_key = f"delete_msg_{message[0]}_{sender_info}_{receiver_info}".replace(" ", "_")
-                if st.button("Delete", key=unique_key):
+                if st.button("Delete", key=f"delete_msg_{message[0]}"):
                     st.session_state.delete_message_id = message[0]
         
         with cols[1]:
             st.write(message[5])  # message_text
+            
+            # Enhanced attachment display
             if message[6]:  # attachment_link
-                st.markdown(format_attachment_display(message[6]), unsafe_allow_html=True)
+                attachment_link = message[6]
+                st.divider()
+                st.write("**Attachment:**")
+                if attachment_link.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                    st.markdown(f"<a href='{attachment_link}' target='_blank'><img src='{attachment_link}' width='200' style='border: 1px solid #ddd; border-radius: 4px; padding: 5px;'></a>", unsafe_allow_html=True)
+                    st.caption(f"[View full image]({attachment_link})")
+                else:
+                    file_name = attachment_link.split('/')[-1] if '/' in attachment_link else attachment_link
+                    st.markdown(f"<div style='background-color: #f0f2f6; padding: 10px; border-radius: 5px;'><a href='{attachment_link}' target='_blank' style='text-decoration: none;'><span style='color: #0366d6;'>📎 {file_name}</span></a></div>", unsafe_allow_html=True)
+                    st.caption(f"[Open link]({attachment_link})")
         
         st.divider()
 
