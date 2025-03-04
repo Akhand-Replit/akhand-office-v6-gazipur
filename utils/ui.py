@@ -17,6 +17,7 @@ def set_page_config(title="Company Management System"):
 def render_login_form():
     """Render login form."""
     with st.form("login_form"):
+        # Username and password in 2 columns (side by side)
         col1, col2 = st.columns(2)
         
         with col1:
@@ -25,11 +26,10 @@ def render_login_form():
         with col2:
             password = st.text_input("Password", type="password", placeholder="Enter your password")
         
-        col1, col2, col3 = st.columns(3)
+        # Login as dropdown - placed outside columns so it spans full width
+        role = st.selectbox("Login as", ["Admin", "Company", "Employee"])
         
-        with col1:
-            role = st.selectbox("Login as", ["Admin", "Company", "Employee"])
-        
+        # Submit button remains the same
         submit_button = st.form_submit_button("Login", use_container_width=True)
         
         if submit_button:
