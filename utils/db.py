@@ -954,7 +954,8 @@ def verify_company(username, password):
                     "username": username,
                     "name": company[1],
                     "profile_pic": company[3],
-                    "role": "company"
+                    "role": "company",
+                    "company_id": company[0]  # Add this line to set company_id to the company's own ID
                 }
             return None
         except Exception as e:
