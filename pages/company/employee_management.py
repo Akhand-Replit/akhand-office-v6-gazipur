@@ -1,3 +1,4 @@
+# Fix for pages/company/employee_management.py
 import streamlit as st
 from utils.ui import render_page_title, user_status_indicator, clean_url
 from utils.db import get_branches, get_employees, create_employee, toggle_employee_status, update_employee_role, update_employee_branch
@@ -11,8 +12,16 @@ def render_employee_management():
     
     render_page_title("Employee Management", "Create and manage employees", "👥")
     
-    # Get active branches for forms
+    # Get active branches for forms - Always fetch fresh data
     branches = get_branches(st.session_state.company_id)
+    
+    # Check if branches exist before creating employees
+    if not branches:
+        st.warning("You need to create at least one branch before adding employees.")
+        st.info("Go to Branch Management to create your first branch.")
+        return
+    
+    # Prepare active branches for dropdown
     active_branches = [(branch[0], branch[1]) for branch in branches if branch[3]]  # id, name, is_active
     
     # Create employee form
@@ -33,12 +42,17 @@ def render_employee_management():
                 
                 role = st.selectbox("Role", ["manager", "asst_manager", "employee"])
                 
-                branch = st.selectbox(
-                    "Branch",
-                    options=active_branches,
-                    format_func=lambda x: x[1],
-                    index=0 if active_branches else None
-                )
+                # Only show branch selector if there are active branches
+                if active_branches:
+                    branch = st.selectbox(
+                        "Branch",
+                        options=active_branches,
+                        format_func=lambda x: x[1],
+                        index=0
+                    )
+                else:
+                    st.error("No active branches available. Please activate a branch first.")
+                    branch = None
             
             submit_button = st.form_submit_button("Create Employee", use_container_width=True)
             
@@ -123,13 +137,13 @@ def render_employee_management():
                     st.markdown(user_status_indicator(employee_active), unsafe_allow_html=True)
                     
                     if employee_active:
-                        st.button("Deactivate", key=f"deactivate_{employee_id}", 
-                                 on_click=lambda eid=employee_id: toggle_employee_status(eid, False),
-                                 type="secondary")
+                        if st.button("Deactivate", key=f"deactivate_{employee_id}", type="secondary"):
+                            toggle_employee_status(employee_id, False)
+                            st.rerun()
                     else:
-                        st.button("Activate", key=f"activate_{employee_id}", 
-                                 on_click=lambda eid=employee_id: toggle_employee_status(eid, True),
-                                 type="primary")
+                        if st.button("Activate", key=f"activate_{employee_id}", type="primary"):
+                            toggle_employee_status(employee_id, True)
+                            st.rerun()
                     
                     if st.button("Edit", key=f"edit_{employee_id}"):
                         st.session_state.edit_employee_id = employee_id
