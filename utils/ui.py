@@ -25,7 +25,7 @@ def render_login_form():
         with col2:
             password = st.text_input("Password", type="password", placeholder="Enter your password")
         
-        col1, col2, col3 = st.columns([3, 1])
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             role = st.selectbox("Login as", ["Admin", "Company", "Employee"])
