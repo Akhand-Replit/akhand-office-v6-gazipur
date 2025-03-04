@@ -18,12 +18,12 @@ def render_login_form():
     """Render login form."""
     with st.form("login_form"):
         # Username and password in 2 columns (side by side)
-        col1, col2 = st.columns(2)
+
         
-        with col1:
+
             username = st.text_input("Username", placeholder="Enter your username")
         
-        with col2:
+
             password = st.text_input("Password", type="password", placeholder="Enter your password")
         
         # Login as dropdown - placed outside columns so it spans full width
