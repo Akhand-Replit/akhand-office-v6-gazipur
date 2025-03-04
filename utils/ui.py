@@ -10,7 +10,7 @@ def set_page_config(title="Company Management System"):
     st.set_page_config(
         page_title=title,
         page_icon="🏢",
-        layout="wide",
+        layout="centered",
         initial_sidebar_state="expanded"
     )
 
@@ -28,7 +28,7 @@ def render_login_form():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            role = st.selectbox("Login as", ["admin", "company", "employee"])
+            role = st.selectbox("Login as", ["Admin", "Company", "Employee"])
         
         submit_button = st.form_submit_button("Login", use_container_width=True)
         
