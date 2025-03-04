@@ -105,11 +105,19 @@ def render_page_title(title, description=None, icon=None):
     
     st.divider()
 
+
 def download_pdf(data, filename="download.pdf"):
-    """Generate download button for PDF."""
-    base64_pdf = base64.b64encode(data).decode('utf-8')
-    download_button = f'<a href="data:application/pdf;base64,{base64_pdf}" download="{filename}" class="button">Download PDF</a>'
-    st.markdown(download_button, unsafe_allow_html=True)
+    """Generate download button for PDF using Streamlit's built-in functionality."""
+    # Create a download button using Streamlit's built-in functionality
+    st.download_button(
+        label="Download PDF",
+        data=data,
+        file_name=filename,
+        mime="application/pdf",
+        key=f"download_{datetime.now().strftime('%Y%m%d%H%M%S')}",  # Unique key to avoid conflicts
+        help="Click to download the PDF report",
+        use_container_width=True
+    )
 
 def format_date(date_str):
     """Format date string to a more readable format."""
