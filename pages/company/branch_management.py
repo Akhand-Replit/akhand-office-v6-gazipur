@@ -1,3 +1,4 @@
+# Fix for pages/company/branch_management.py
 import streamlit as st
 from utils.ui import render_page_title, user_status_indicator
 from utils.db import get_branches, create_branch, toggle_branch_status, get_employees
@@ -28,13 +29,15 @@ def render_branch_management():
                     
                     if branch_id:
                         st.success(f"Branch '{branch_name}' created successfully!")
+                        # Need to rerun after modifying the database
                         st.rerun()
                     else:
                         st.error("Failed to create branch")
     
-    # List branches
+    # List branches - Get fresh data every time
     st.write("### Branch List")
     
+    # Get updated branches after possible creation
     branches = get_branches(st.session_state.company_id)
     
     if branches:
@@ -67,13 +70,13 @@ def render_branch_management():
                     
                     if not is_main_branch:  # Can't toggle status of main branch
                         if is_active:
-                            st.button("Deactivate", key=f"deactivate_{branch_id}", 
-                                     on_click=lambda bid=branch_id: toggle_branch_status(bid, False),
-                                     type="secondary")
+                            if st.button("Deactivate", key=f"deactivate_{branch_id}", type="secondary"):
+                                toggle_branch_status(branch_id, False)
+                                st.rerun()
                         else:
-                            st.button("Activate", key=f"activate_{branch_id}", 
-                                     on_click=lambda bid=branch_id: toggle_branch_status(bid, True),
-                                     type="primary")
+                            if st.button("Activate", key=f"activate_{branch_id}", type="primary"):
+                                toggle_branch_status(branch_id, True)
+                                st.rerun()
                     
                     if st.button("View Details", key=f"view_{branch_id}"):
                         st.session_state.view_branch_id = branch_id
