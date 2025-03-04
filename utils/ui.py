@@ -20,7 +20,7 @@ def render_login_form():
         # All fields stacked vertically
         username = st.text_input("Username", placeholder="Enter your username")
         password = st.text_input("Password", type="password", placeholder="Enter your password")
-        role = st.selectbox("Login as", ["Admin", "Company", "Employee"])
+        role = st.selectbox("Login as", ["admin", "company", "employee"])
         
         # Submit button
         submit_button = st.form_submit_button("Login", use_container_width=True)
