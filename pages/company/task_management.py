@@ -16,7 +16,7 @@ def render_task_management():
     active_branches = [(branch[0], branch[1]) for branch in branches if branch[3]]  # id, name, is_active
     
     employees = get_employees(company_id=st.session_state.company_id)
-    active_employees = [(employee[0], f"{employee[1]} ({employee[4].capitalize()})") for employee in employees if employee[5]]  # id, name, is_active
+    active_employees = [(employee[0], employee[1], employee[4], employee[6]) for employee in employees if employee[5]]  # id, name, role, branch_name
     
     # Create task form with tabs
     st.write("### Create New Task")
@@ -26,65 +26,85 @@ def render_task_management():
     
     # Branch Task Tab
     with branch_tab:
-        with st.form("create_branch_task_form"):
-            task_title = st.text_input("Task Title", placeholder="Enter task title", key="branch_title")
-            task_description = st.text_area("Task Description", placeholder="Enter task description", key="branch_desc")
-            
-            branch = st.selectbox(
-                "Select Branch",
-                options=active_branches,
-                format_func=lambda x: x[1],
-                index=0 if active_branches else None,
-                key="branch_select"
-            )
-            
-            submit_branch_button = st.form_submit_button("Create Branch Task", use_container_width=True)
-            
-            if submit_branch_button:
-                if not task_title or not task_description or not branch:
-                    st.error("Please fill all required fields")
-                else:
-                    branch_id, branch_name = branch
-                    task_id = create_task(
-                        task_title, task_description, "branch", branch_id, "company", st.session_state.user_id
-                    )
-                    
-                    if task_id:
-                        st.success(f"Task '{task_title}' assigned to branch '{branch_name}' successfully!")
-                        st.rerun()
+        with st.container(border=True):
+            with st.form("create_branch_task_form"):
+                task_title = st.text_input("Task Title", placeholder="Enter task title", key="branch_title")
+                task_description = st.text_area("Task Description", placeholder="Enter task description", key="branch_desc")
+                
+                branch = st.selectbox(
+                    "Select Branch",
+                    options=active_branches,
+                    format_func=lambda x: x[1],
+                    index=0 if active_branches else None,
+                    key="branch_select"
+                )
+                
+                submit_branch_button = st.form_submit_button("Create Task", use_container_width=True)
+                
+                if submit_branch_button:
+                    if not task_title or not task_description or not branch:
+                        st.error("Please fill all required fields")
                     else:
-                        st.error("Failed to create task")
+                        branch_id, branch_name = branch
+                        task_id = create_task(
+                            task_title, task_description, "branch", branch_id, "company", st.session_state.user_id
+                        )
+                        
+                        if task_id:
+                            st.success(f"Task '{task_title}' assigned to branch '{branch_name}' successfully!")
+                            st.rerun()
+                        else:
+                            st.error("Failed to create task")
     
     # Employee Task Tab
     with employee_tab:
-        with st.form("create_employee_task_form"):
-            task_title = st.text_input("Task Title", placeholder="Enter task title", key="employee_title")
-            task_description = st.text_area("Task Description", placeholder="Enter task description", key="employee_desc")
-            
-            employee = st.selectbox(
-                "Select Employee",
-                options=active_employees,
-                format_func=lambda x: x[1],
-                index=0 if active_employees else None,
-                key="employee_select"
-            )
-            
-            submit_employee_button = st.form_submit_button("Create Employee Task", use_container_width=True)
-            
-            if submit_employee_button:
-                if not task_title or not task_description or not employee:
-                    st.error("Please fill all required fields")
+        with st.container(border=True):
+            with st.form("create_employee_task_form"):
+                task_title = st.text_input("Task Title", placeholder="Enter task title", key="employee_title")
+                task_description = st.text_area("Task Description", placeholder="Enter task description", key="employee_desc")
+                
+                # Add branch filter for employees
+                filter_branch = st.selectbox(
+                    "Filter by Branch",
+                    options=[(-1, "All Branches")] + active_branches,
+                    format_func=lambda x: x[1],
+                    index=0,
+                    key="employee_branch_filter"
+                )
+                
+                # Filter employees based on selected branch
+                filtered_employees = []
+                if filter_branch[0] == -1:  # All branches
+                    filtered_employees = [(emp[0], f"{emp[1]} ({emp[2].capitalize()}) - {emp[3]}") for emp in active_employees]
                 else:
-                    employee_id, employee_name = employee
-                    task_id = create_task(
-                        task_title, task_description, "employee", employee_id, "company", st.session_state.user_id
-                    )
-                    
-                    if task_id:
-                        st.success(f"Task '{task_title}' assigned to {employee_name} successfully!")
-                        st.rerun()
+                    filtered_employees = [(emp[0], f"{emp[1]} ({emp[2].capitalize()}) - {emp[3]}") 
+                                         for emp in active_employees if emp[3] == filter_branch[1]]
+                
+                # Select employee from filtered list
+                employee = st.selectbox(
+                    "Select Employee",
+                    options=filtered_employees,
+                    format_func=lambda x: x[1],
+                    index=0 if filtered_employees else None,
+                    key="employee_select"
+                )
+                
+                submit_employee_button = st.form_submit_button("Create Task", use_container_width=True)
+                
+                if submit_employee_button:
+                    if not task_title or not task_description or not employee:
+                        st.error("Please fill all required fields")
                     else:
-                        st.error("Failed to create task")
+                        employee_id, employee_name = employee
+                        task_id = create_task(
+                            task_title, task_description, "employee", employee_id, "company", st.session_state.user_id
+                        )
+                        
+                        if task_id:
+                            st.success(f"Task '{task_title}' assigned to {employee_name} successfully!")
+                            st.rerun()
+                        else:
+                            st.error("Failed to create task")
     
     # List tasks
     st.write("### Task List")
@@ -147,7 +167,9 @@ def render_task_management():
                         st.write(f"**Progress:** {completed_count}/{len(branch_employees)} employees completed")
                     else:  # employee
                         employee_name = next((employee[1] for employee in employees if employee[0] == task_assigned_id), f"Employee {task_assigned_id}")
-                        st.write(f"**Assigned to Employee:** {employee_name}")
+                        employee_role = next((employee[4] for employee in employees if employee[0] == task_assigned_id), "")
+                        employee_branch = next((employee[6] for employee in employees if employee[0] == task_assigned_id), "")
+                        st.write(f"**Assigned to:** {employee_name} ({employee_role.capitalize()}) - {employee_branch}")
                 
                 with col2:
                     st.markdown(task_status_indicator(is_completed), unsafe_allow_html=True)
