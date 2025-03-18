@@ -1001,3 +1001,78 @@ def verify_employee(username, password):
         finally:
             conn.close()
     return None
+
+# Password Update Functions
+def update_company_password(company_id, current_password, new_password):
+    """Update company password."""
+    conn = get_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            
+            # Verify current password
+            cur.execute("""
+            SELECT password_hash FROM company
+            WHERE id = %s
+            """, (company_id,))
+            
+            result = cur.fetchone()
+            if not result or not bcrypt.checkpw(current_password.encode('utf-8'), result[0].encode('utf-8')):
+                return False, "Current password is incorrect"
+            
+            # Hash the new password
+            password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
+            # Update password
+            cur.execute("""
+            UPDATE company
+            SET password_hash = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            """, (password_hash, company_id))
+            
+            conn.commit()
+            cur.close()
+            return True, "Password updated successfully"
+        except Exception as e:
+            conn.rollback()
+            return False, f"Failed to update password: {e}"
+        finally:
+            conn.close()
+    return False, "Database connection failed"
+
+def update_employee_password(employee_id, current_password, new_password):
+    """Update employee password."""
+    conn = get_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            
+            # Verify current password
+            cur.execute("""
+            SELECT password_hash FROM employee
+            WHERE id = %s
+            """, (employee_id,))
+            
+            result = cur.fetchone()
+            if not result or not bcrypt.checkpw(current_password.encode('utf-8'), result[0].encode('utf-8')):
+                return False, "Current password is incorrect"
+            
+            # Hash the new password
+            password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
+            # Update password
+            cur.execute("""
+            UPDATE employee
+            SET password_hash = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            """, (password_hash, employee_id))
+            
+            conn.commit()
+            cur.close()
+            return True, "Password updated successfully"
+        except Exception as e:
+            conn.rollback()
+            return False, f"Failed to update password: {e}"
+        finally:
+            conn.close()
+    return False, "Database connection failed"
