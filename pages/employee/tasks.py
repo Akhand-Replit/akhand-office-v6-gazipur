@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.ui import render_page_title, task_status_indicator
-from utils.db import get_tasks, complete_task
+from utils.db import get_tasks, complete_task, get_connection
 from utils.auth import check_employee
 
 def render_tasks():
@@ -14,6 +14,27 @@ def render_tasks():
     # Get tasks assigned to employee
     employee_tasks = get_tasks(employee_id=st.session_state.user_id)
     
+    # Get the employee's personal completion status for each task
+    conn = get_connection()
+    task_completion_status = {}
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+            SELECT task_id, is_completed FROM task_completion
+            WHERE employee_id = %s
+            """, (st.session_state.user_id,))
+            
+            completions = cur.fetchall()
+            for completion in completions:
+                task_completion_status[completion[0]] = completion[1]
+            
+            cur.close()
+        except Exception as e:
+            st.error(f"Failed to get task completion status: {e}")
+        finally:
+            conn.close()
+    
     # Check for task completion action
     if "complete_task_id" in st.session_state and st.session_state.complete_task_id:
         task_id = st.session_state.complete_task_id
@@ -23,6 +44,25 @@ def render_tasks():
             st.session_state.complete_task_id = None
             # Refresh tasks list after completion
             employee_tasks = get_tasks(employee_id=st.session_state.user_id)
+            # Refresh completion status
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("""
+                    SELECT task_id, is_completed FROM task_completion
+                    WHERE employee_id = %s
+                    """, (st.session_state.user_id,))
+                    
+                    completions = cur.fetchall()
+                    task_completion_status = {}
+                    for completion in completions:
+                        task_completion_status[completion[0]] = completion[1]
+                    
+                    cur.close()
+                except Exception as e:
+                    st.error(f"Failed to refresh task completion status: {e}")
+                finally:
+                    conn.close()
         else:
             st.error("Failed to complete task")
             st.session_state.complete_task_id = None
@@ -32,7 +72,8 @@ def render_tasks():
     
     # Pending Tasks Tab
     with tab1:
-        pending_tasks = [t for t in employee_tasks if not t[7]]  # is_completed
+        # Tasks that the employee hasn't personally completed
+        pending_tasks = [t for t in employee_tasks if not task_completion_status.get(t[0], False)]
         
         if pending_tasks:
             for task in pending_tasks:
@@ -73,15 +114,22 @@ def render_tasks():
     
     # Completed Tasks Tab
     with tab2:
-        completed_tasks = [t for t in employee_tasks if t[7]]  # is_completed
+        # Tasks that the employee has personally completed
+        completed_tasks = []
+        for task in employee_tasks:
+            task_id = task[0]
+            if task_completion_status.get(task_id, False):
+                completed_tasks.append(task)
         
         if completed_tasks:
             for task in completed_tasks:
                 task_id = task[0]
                 task_title = task[1]
                 task_description = task[2]
+                assigned_to = task[3]
                 assigned_by = task[5]
                 assigned_by_id = task[6]
+                is_completed = task[7]  # Overall task completion status
                 created_at = task[8]
                 
                 with st.container(border=True):
@@ -100,9 +148,17 @@ def render_tasks():
                             st.caption("Assigned by: Assistant Manager")
                         
                         st.caption(f"Assigned on: {created_at}")
+                        
+                        # For branch tasks that are not fully completed
+                        if assigned_to == "branch" and not is_completed:
+                            st.info("You've completed this task, but it's waiting for other employees to complete it as well.")
                     
                     with col2:
-                        st.write("Status:")
+                        st.write("Your Status:")
                         st.markdown(task_status_indicator(True), unsafe_allow_html=True)
+                        
+                        if assigned_to == "branch" and not is_completed:
+                            st.write("Overall Status:")
+                            st.markdown(task_status_indicator(False), unsafe_allow_html=True)
         else:
             st.info("No completed tasks found yet.")
