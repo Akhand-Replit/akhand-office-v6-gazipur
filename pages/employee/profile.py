@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.ui import render_page_title, clean_url
-from utils.db import update_employee_profile
+from utils.db import update_employee_profile, update_employee_password
 from utils.auth import check_employee
 
 def render_profile():
@@ -43,6 +43,30 @@ def render_profile():
                         st.rerun()
                     else:
                         st.error("Failed to update profile")
+    
+    # Password Update Form
+    st.write("### Update Password")
+    
+    with st.container(border=True):
+        with st.form("update_password_form"):
+            current_password = st.text_input("Current Password", type="password", placeholder="Enter your current password")
+            new_password = st.text_input("New Password", type="password", placeholder="Enter your new password")
+            confirm_password = st.text_input("Confirm New Password", type="password", placeholder="Confirm your new password")
+            
+            submit_password = st.form_submit_button("Update Password", use_container_width=True)
+            
+            if submit_password:
+                if not current_password or not new_password or not confirm_password:
+                    st.error("Please fill all password fields")
+                elif new_password != confirm_password:
+                    st.error("New password and confirm password do not match")
+                else:
+                    success, message = update_employee_password(st.session_state.user_id, current_password, new_password)
+                    
+                    if success:
+                        st.success(message)
+                    else:
+                        st.error(message)
     
     # Account Information
     st.write("### Account Information")
