@@ -579,6 +579,8 @@ def get_tasks(company_id=None, branch_id=None, employee_id=None, assigned_to=Non
             conn.close()
     return []
 
+
+
 def complete_task(task_id, employee_id):
     """Mark a task as completed by an employee."""
     conn = get_connection()
@@ -608,17 +610,6 @@ def complete_task(task_id, employee_id):
                 VALUES (%s, %s, TRUE, CURRENT_TIMESTAMP)
                 """, (task_id, employee_id))
             
-            # Check if all employees have completed this task
-            cur.execute("""
-            SELECT COUNT(*) AS total, SUM(CASE WHEN is_completed THEN 1 ELSE 0 END) AS completed
-            FROM task_completion
-            WHERE task_id = %s
-            """, (task_id,))
-            
-            result = cur.fetchone()
-            total = result[0]
-            completed = result[1]
-            
             # Get the task details to determine if it's branch or employee task
             cur.execute("""
             SELECT assigned_to, assigned_id FROM task
@@ -626,15 +617,47 @@ def complete_task(task_id, employee_id):
             """, (task_id,))
             
             task_info = cur.fetchone()
+            assigned_to = task_info[0]
+            assigned_id = task_info[1]
             
-            # If single employee task or all employees have completed the branch task,
-            # mark the task as completed
-            if task_info[0] == 'employee' or (total > 0 and total == completed):
+            if assigned_to == 'employee':
+                # For individual employee task, directly mark as completed
                 cur.execute("""
                 UPDATE task
                 SET is_completed = TRUE, updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
                 """, (task_id,))
+            else:  # branch task
+                # For branch task, check if all active employees have completed it
+                
+                # Get all active employees in the branch
+                cur.execute("""
+                SELECT id FROM employee 
+                WHERE branch_id = %s AND is_active = TRUE
+                """, (assigned_id,))
+                
+                active_employees = cur.fetchall()
+                total_employees = len(active_employees)
+                
+                if total_employees > 0:
+                    # Check how many of these employees have completed the task
+                    employee_ids = [emp[0] for emp in active_employees]
+                    placeholders = ', '.join(['%s'] * len(employee_ids))
+                    query = f"""
+                    SELECT COUNT(*) FROM task_completion
+                    WHERE task_id = %s AND employee_id IN ({placeholders}) AND is_completed = TRUE
+                    """
+                    
+                    cur.execute(query, [task_id] + employee_ids)
+                    completed_count = cur.fetchone()[0]
+                    
+                    # Mark task as completed if all active employees completed it
+                    if completed_count >= total_employees:
+                        cur.execute("""
+                        UPDATE task
+                        SET is_completed = TRUE, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                        """, (task_id,))
             
             conn.commit()
             cur.close()
