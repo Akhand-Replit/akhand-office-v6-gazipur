@@ -585,12 +585,28 @@ def complete_task(task_id, employee_id):
     if conn:
         try:
             cur = conn.cursor()
-            # Update task completion for the employee
+            
+            # First check if the task completion record exists
             cur.execute("""
-            UPDATE task_completion
-            SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            SELECT id FROM task_completion
             WHERE task_id = %s AND employee_id = %s
             """, (task_id, employee_id))
+            
+            completion_record = cur.fetchone()
+            
+            if completion_record:
+                # Update existing task completion record
+                cur.execute("""
+                UPDATE task_completion
+                SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                WHERE task_id = %s AND employee_id = %s
+                """, (task_id, employee_id))
+            else:
+                # Create new task completion record
+                cur.execute("""
+                INSERT INTO task_completion (task_id, employee_id, is_completed, completed_at)
+                VALUES (%s, %s, TRUE, CURRENT_TIMESTAMP)
+                """, (task_id, employee_id))
             
             # Check if all employees have completed this task
             cur.execute("""
@@ -603,8 +619,17 @@ def complete_task(task_id, employee_id):
             total = result[0]
             completed = result[1]
             
-            # If all employees have completed the task, mark the task as completed
-            if total == completed:
+            # Get the task details to determine if it's branch or employee task
+            cur.execute("""
+            SELECT assigned_to, assigned_id FROM task
+            WHERE id = %s
+            """, (task_id,))
+            
+            task_info = cur.fetchone()
+            
+            # If single employee task or all employees have completed the branch task,
+            # mark the task as completed
+            if task_info[0] == 'employee' or (total > 0 and total == completed):
                 cur.execute("""
                 UPDATE task
                 SET is_completed = TRUE, updated_at = CURRENT_TIMESTAMP
