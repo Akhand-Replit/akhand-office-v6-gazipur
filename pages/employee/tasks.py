@@ -14,6 +14,19 @@ def render_tasks():
     # Get tasks assigned to employee
     employee_tasks = get_tasks(employee_id=st.session_state.user_id)
     
+    # Check for task completion action
+    if "complete_task_id" in st.session_state and st.session_state.complete_task_id:
+        task_id = st.session_state.complete_task_id
+        if complete_task(task_id, st.session_state.user_id):
+            st.success("Task marked as completed!")
+            # Clear the task ID and refresh the page data
+            st.session_state.complete_task_id = None
+            # Refresh tasks list after completion
+            employee_tasks = get_tasks(employee_id=st.session_state.user_id)
+        else:
+            st.error("Failed to complete task")
+            st.session_state.complete_task_id = None
+    
     # Filter tasks by status
     tab1, tab2 = st.tabs(["Pending Tasks", "Completed Tasks"])
     
@@ -51,12 +64,10 @@ def render_tasks():
                         st.write("Status:")
                         st.markdown(task_status_indicator(False), unsafe_allow_html=True)
                         
+                        # Use a button to mark task as complete
                         if st.button("Mark as Completed", key=f"complete_{task_id}", type="primary"):
-                            if complete_task(task_id, st.session_state.user_id):
-                                st.success("Task marked as completed!")
-                                st.rerun()
-                            else:
-                                st.error("Failed to complete task")
+                            st.session_state.complete_task_id = task_id
+                            st.rerun()
         else:
             st.info("No pending tasks found. Great job!")
     
