@@ -59,26 +59,32 @@ def render_task_management():
     # Employee Task Tab
     with employee_tab:
         with st.container(border=True):
+            # Use st.form_submit_button outside of a form for the branch filter to trigger immediate filtering
+            # without requiring the form submission
+            filter_branch = st.selectbox(
+                "Filter by Branch",
+                options=[(-1, "All Branches")] + active_branches,
+                format_func=lambda x: x[1],
+                index=0,
+                key="employee_branch_filter"
+            )
+            
+            # Filter employees based on selected branch
+            filtered_employees = []
+            if filter_branch[0] == -1:  # All branches
+                filtered_employees = [(emp[0], f"{emp[1]} ({emp[2].capitalize()}) - {emp[3]}") for emp in active_employees]
+            else:
+                # Store branch_id instead of branch_name for more reliable filtering
+                branch_id = filter_branch[0]
+                branch_name = filter_branch[1]
+                # Filter employees by branch_id using database query for accuracy
+                branch_employees = get_employees(company_id=st.session_state.company_id, branch_id=branch_id)
+                active_branch_employees = [emp for emp in branch_employees if emp[5]]  # Only active employees
+                filtered_employees = [(emp[0], f"{emp[1]} ({emp[4].capitalize()}) - {emp[6]}") for emp in active_branch_employees]
+            
             with st.form("create_employee_task_form"):
                 task_title = st.text_input("Task Title", placeholder="Enter task title", key="employee_title")
                 task_description = st.text_area("Task Description", placeholder="Enter task description", key="employee_desc")
-                
-                # Add branch filter for employees
-                filter_branch = st.selectbox(
-                    "Filter by Branch",
-                    options=[(-1, "All Branches")] + active_branches,
-                    format_func=lambda x: x[1],
-                    index=0,
-                    key="employee_branch_filter"
-                )
-                
-                # Filter employees based on selected branch
-                filtered_employees = []
-                if filter_branch[0] == -1:  # All branches
-                    filtered_employees = [(emp[0], f"{emp[1]} ({emp[2].capitalize()}) - {emp[3]}") for emp in active_employees]
-                else:
-                    filtered_employees = [(emp[0], f"{emp[1]} ({emp[2].capitalize()}) - {emp[3]}") 
-                                         for emp in active_employees if emp[3] == filter_branch[1]]
                 
                 # Select employee from filtered list
                 employee = st.selectbox(
