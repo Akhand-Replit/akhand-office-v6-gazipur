@@ -1,3 +1,4 @@
+# utils/ui.py
 import streamlit as st
 from datetime import datetime
 import base64
@@ -21,6 +22,9 @@ def render_login_form():
     col1, col2 = st.columns([1, 1])
     
     with col1:
+        # Add empty spaces to push the image down for vertical centering
+        for _ in range(7):  # Add vertical spacing to center the image
+            st.write("")
         st.image("https://i.ibb.co/WWTNq7mX/151193487138.png", width=500)
     
     with col2:
