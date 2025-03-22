@@ -15,26 +15,87 @@ def set_page_config(title="Company Management System"):
     )
 
 def render_login_form():
-    """Render login form."""
-    with st.form("login_form"):
-        # All fields stacked vertically
-        username = st.text_input("Username", placeholder="Enter your username")
-        password = st.text_input("Password", type="password", placeholder="Enter your password")
-        role = st.selectbox("Login as", ["admin", "company", "employee"])
+    """Render modern login form matching the design."""
+    
+    # Add the illustration
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.image("https://i.ibb.co/WWTNq7mX/151193487138.png", width=300)
+    
+    with col2:
+        st.markdown("<h1 style='text-align: left; font-size: 2.5rem; margin-bottom: 2rem;'>Log In</h1>", unsafe_allow_html=True)
         
-        # Submit button
-        submit_button = st.form_submit_button("Login", use_container_width=True)
-        
-        if submit_button:
-            if not username or not password:
-                st.error("Please enter both username and password")
-            else:
-                success = login_user(username, password, role)
-                if success:
-                    st.success("Login successful!")
-                    st.rerun()
+        with st.form("login_form"):
+            # Username with icon
+            st.markdown(
+                """
+                <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                    <div style="margin-right: 10px;">👤</div>
+                    <div style="font-weight: 500; color: #787878;">Your Name</div>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+            username = st.text_input("", placeholder="Enter your username", label_visibility="collapsed")
+            
+            # Password with icon
+            st.markdown(
+                """
+                <div style="display: flex; align-items: center; margin-bottom: 5px; margin-top: 15px;">
+                    <div style="margin-right: 10px;">🔒</div>
+                    <div style="font-weight: 500; color: #787878;">Password</div>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+            password = st.text_input("", type="password", placeholder="Enter your password", label_visibility="collapsed")
+            
+            # Role selector - hidden under expander to maintain clean look
+            with st.expander("Select your role"):
+                role = st.selectbox("Login as", ["admin", "company", "employee"])
+            
+            # Remember me checkbox
+            remember_me = st.checkbox("Remember me")
+            
+            # Add some space
+            st.write("")
+            
+            # Submit button styled to match the blue button in the image
+            submit_button = st.form_submit_button(
+                "Log In", 
+                use_container_width=True,
+                type="primary"
+            )
+            
+            # Custom CSS for the button (applied globally)
+            st.markdown(
+                """
+                <style>
+                div.stButton > button[kind="primary"] {
+                    background-color: #5B9BD5;
+                    color: white;
+                    font-weight: 500;
+                    border-radius: 5px;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    margin-top: 10px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            if submit_button:
+                if not username or not password:
+                    st.error("Please enter both username and password")
                 else:
-                    st.error("Invalid username or password")
+                    success = login_user(username, password, role)
+                    if success:
+                        st.success("Login successful!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid username or password")
 
 def render_navigation(current_page, navigation_items):
     """Render navigation menu."""
@@ -167,8 +228,6 @@ def format_attachment_display(attachment_link):
 def set_delete_message_id(msg_id):
     """Helper function to set message ID for deletion."""
     st.session_state.delete_message_id = msg_id
-
-# Open the utils/ui.py file and modify the render_message_card function:
 
 def render_message_card(message, sender_info=None, receiver_info=None, can_delete=False):
     """Render a message card."""
