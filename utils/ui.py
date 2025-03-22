@@ -21,7 +21,7 @@ def render_login_form():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.image("https://i.ibb.co/WWTNq7mX/151193487138.png", width=300)
+        st.image("https://i.ibb.co/WWTNq7mX/151193487138.png", width=500)
     
     with col2:
         st.markdown("<h1 style='text-align: left; font-size: 2.5rem; margin-bottom: 2rem;'>Log In</h1>", unsafe_allow_html=True)
