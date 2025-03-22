@@ -11,11 +11,11 @@ from utils.db import initialize_database
 from utils.ui import set_page_config, render_login_form
 import streamlit as st
 
-# Initialize database
-initialize_database()
 
 # Set page configuration
 set_page_config("Company Management System")
+# Initialize database
+initialize_database()
 
 # Add custom CSS
 try:
@@ -49,16 +49,34 @@ if "profile_pic" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "dashboard"
 
+# New function to render the enhanced login page
+def render_login_page():
+    """Render the enhanced login page."""
+    # Set up a container with custom styling
+    st.markdown(
+        """
+        <style>
+        .main .block-container {
+            max-width: 1000px;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Create a card-like container for the login
+    with st.container():
+        # The login form now handles the title and layout
+        render_login_form()
+
 # Main application
 def main():
     # Check if user is authenticated
     if not st.session_state.authenticated:
-        with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.header("Welcome to Company Management System")
-                st.subheader("Please login to continue")
-                render_login_form()
+        # Use the new enhanced login page
+        render_login_page()
     else:
         # Display appropriate dashboard based on user role
         if st.session_state.user_role == "admin":
